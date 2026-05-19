@@ -2,17 +2,9 @@ const mongoose=
 require("mongoose");
 
 
-const paymentSchema=
+const bookingSchema=
+
 new mongoose.Schema({
-
-user:{
-
-type:
-mongoose.Schema.Types.ObjectId,
-
-ref:"User"
-
-},
 
 property:{
 
@@ -23,29 +15,32 @@ ref:"Property"
 
 },
 
-amount:{
+tenant:{
 
-type:Number
+type:
+mongoose.Schema.Types.ObjectId,
+
+ref:"User"
 
 },
 
-paymentStatus:{
+visitDate:Date,
+
+status:{
 
 type:String,
 
 enum:[
+
 "pending",
-"success",
-"failed"
+"approved",
+"cancelled"
+
 ],
 
 default:"pending"
 
-},
-
-razorpayOrderId:String,
-
-razorpayPaymentId:String
+}
 
 },
 {
@@ -55,6 +50,9 @@ timestamps:true
 
 module.exports=
 mongoose.model(
-"Payment",
-paymentSchema
+
+"VisitBooking",
+
+bookingSchema
+
 );
