@@ -1,6 +1,8 @@
-import { createContext, useCallback, useContext, useMemo, useState } from 'react'
+import { createContext, useCallback, useContext, useMemo, useState, useEffect } from 'react'
+import { mapBackendProperty } from '../utils/mapBackendProperty'
 
 const WISHLIST_KEY = 'luxe-wishlist'
+const AUTH_KEY = 'auth-user'
 
 function loadWishlist() {
   try {
@@ -11,16 +13,75 @@ function loadWishlist() {
   }
 }
 
+function loadAuthUser() {
+  try {
+    const raw = localStorage.getItem(AUTH_KEY)
+    return raw ? JSON.parse(raw) : null
+  } catch {
+    return null
+  }
+}
+
 const AppContext = createContext(null)
 
 export function AppProvider({ children }) {
   const [wishlist, setWishlist] = useState(loadWishlist)
+  const [authUser, setAuthUser] = useState(loadAuthUser)
   const [toast, setToast] = useState(null)
+  const [properties, setProperties] = useState([])
+  const [propertiesLoading, setPropertiesLoading] = useState(true)
   const [searchFilters, setSearchFilters] = useState({
     neighborhood: '',
     propertyType: '',
     budget: '',
   })
+
+// Utility to fetch all properties and update state
+  const fetchAllProperties = async () => {
+    try {
+      const res = await fetch('/api/properties')
+      const data = await res.json()
+      if (data.success) {
+        setProperties(data.data.map(mapBackendProperty))
+      }
+    } catch (err) {
+      console.error('Error fetching properties from backend:', err)
+    } finally {
+      setPropertiesLoading(false)
+    }
+  };
+
+  // Load properties on mount
+  useEffect(() => {
+    fetchAllProperties();
+  }, []);
+
+  // Function to add a new property (admin only)
+  const addProperty = async (property) => {
+    try {
+      const res = await fetch('/api/properties', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(authUser?.token && { Authorization: `Bearer ${authUser.token}` }),
+        },
+        body: JSON.stringify(property),
+      });
+      const data = await res.json();
+      if (!data.success) {
+        throw new Error(data.message || 'Failed to add property');
+      }
+      // Refresh property list after successful post
+      await fetchAllProperties();
+      showToast('Property posted successfully', 'success');
+    } catch (err) {
+      console.error('Add property error:', err);
+      showToast(err.message || 'Failed to post property', 'error');
+      throw err;
+    }
+  };
+
+
 
   const showToast = useCallback((message, type = 'success') => {
     setToast({ message, type, id: Date.now() })
@@ -48,6 +109,12 @@ export function AppProvider({ children }) {
     document.getElementById('recommended')?.scrollIntoView({ behavior: 'smooth' })
   }, [showToast])
 
+  const logout = useCallback(() => {
+    setAuthUser(null)
+    localStorage.removeItem(AUTH_KEY)
+    showToast('Logged out successfully', 'success')
+  }, [showToast])
+
   const value = useMemo(
     () => ({
       wishlist,
@@ -58,8 +125,14 @@ export function AppProvider({ children }) {
       searchFilters,
       setSearchFilters,
       applySearch,
+      authUser,
+      setAuthUser,
+      logout,
+      properties,
+      propertiesLoading,
+      addProperty,
     }),
-    [wishlist, toggleWishlist, isWishlisted, toast, showToast, searchFilters, applySearch],
+    [wishlist, toggleWishlist, isWishlisted, toast, showToast, searchFilters, applySearch, authUser, logout, properties, propertiesLoading, addProperty],
   )
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>
@@ -70,3 +143,4 @@ export function useApp() {
   if (!ctx) throw new Error('useApp must be used within AppProvider')
   return ctx
 }
+

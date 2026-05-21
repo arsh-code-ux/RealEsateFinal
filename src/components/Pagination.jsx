@@ -1,10 +1,4 @@
-interface PaginationProps {
-  currentPage: number
-  totalPages: number
-  onChange: (page: number) => void
-}
-
-export function Pagination({ currentPage, totalPages, onChange }: PaginationProps) {
+export function Pagination({ currentPage, totalPages, onChange }) {
   const pages = Array.from({ length: totalPages }, (_, index) => index + 1)
 
   return (

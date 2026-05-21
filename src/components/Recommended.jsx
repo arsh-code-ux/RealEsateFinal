@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { Link } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import { properties } from '../data/properties'
 import { filterProperties } from '../utils/filterProperties'
@@ -35,9 +36,9 @@ function Recommended() {
                 Clear filters
               </button>
             ) : (
-              <a href="#recommended" className="link-text link-text--chevron">
+              <Link to="/listings" className="link-text link-text--chevron" style={{ textDecoration: 'none' }}>
                 View All <span aria-hidden>›</span>
-              </a>
+              </Link>
             )}
           </div>
         </ScrollReveal>

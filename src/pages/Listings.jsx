@@ -1,60 +1,79 @@
-import { useEffect, useMemo, useState } from 'react'
-import { Pagination } from './components/Pagination'
-import { PropertyCard } from './components/PropertyCard'
-import { PropertyDetails } from './components/PropertyDetails'
-import { properties } from './data/properties'
-import type { Property, SortOption, ViewMode } from './types'
-import { editDistance, formatPrice, quickSort } from './utils/algorithms'
-import './App.css'
+import { useState, useEffect, useMemo } from 'react'
+import { Link } from 'react-router-dom'
+import { Pagination } from '../components/Pagination'
+import PropertyCard from '../components/PropertyCard'
+import { quickSort, editDistance, formatPrice } from '../utils/algorithms'
+import { mapBackendProperty } from '../utils/mapBackendProperty'
+import './Listings.css'
 
 const PAGE_SIZE = 4
 
-const typeOptions = ['All Types', 'PG', 'Apartment', 'House'] as const
+function Listings() {
+  const [properties, setProperties] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
-function App() {
-  const [viewMode, setViewMode] = useState<ViewMode>('grid')
-  const [page, setPage] = useState(1)
-  const [selectedProperty, setSelectedProperty] = useState<Property | null>(null)
   const [searchText, setSearchText] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [location, setLocation] = useState('All Locations')
-  const [propertyType, setPropertyType] = useState<(typeof typeOptions)[number]>('All Types')
+  const [propertyType, setPropertyType] = useState('All Types')
   const [budget, setBudget] = useState('')
   const [ratingFilter, setRatingFilter] = useState('0')
-  const [furnishedOnly, setFurnishedOnly] = useState(false)
   const [nearbyFilter, setNearbyFilter] = useState('All')
-  const [sortOption, setSortOption] = useState<SortOption>('recommended')
-  const [imageIndex, setImageIndex] = useState(0)
+  const [furnishedOnly, setFurnishedOnly] = useState(false)
+  const [sortOption, setSortOption] = useState('recommended')
+  const [viewMode, setViewMode] = useState('grid')
+  const [page, setPage] = useState(1)
+
+  // Fetch properties from backend
+  useEffect(() => {
+    setLoading(true)
+    fetch('/api/properties')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          const mapped = data.data.map(mapBackendProperty)
+          setProperties(mapped)
+        } else {
+          setError('Failed to fetch properties')
+        }
+        setLoading(false)
+      })
+      .catch(err => {
+        setError(err.message)
+        setLoading(false)
+      })
+  }, [])
 
   useEffect(() => {
-    const timer = window.setTimeout(() => setDebouncedSearch(searchText), 300)
-    return () => window.clearTimeout(timer)
+    const timer = setTimeout(() => setDebouncedSearch(searchText), 300)
+    return () => clearTimeout(timer)
   }, [searchText])
 
-  const locationSuggestions = useMemo(() => {
-    if (!debouncedSearch.trim()) return []
+  const typeOptions = ['All Types', ...new Set(properties.map((p) => p.type))]
+  const allLocations = Array.from(new Set(properties.map((p) => p.location)))
+  const nearbyOptions = Array.from(new Set(properties.flatMap((p) => p.amenities || [])))
 
-    const uniqueLocations = Array.from(new Set(properties.map((property) => property.location)))
-    return uniqueLocations
-      .map((item) => ({ item, score: editDistance(debouncedSearch, item) }))
-      .sort((left, right) => left.score - right.score)
-      .slice(0, 4)
-      .map(({ item }) => item)
-  }, [debouncedSearch])
+  const locationSuggestions = useMemo(() => {
+    if (!searchText || searchText.length < 2) return []
+    return allLocations.filter(
+      (loc) => loc.toLowerCase().includes(searchText.toLowerCase()) && loc !== location
+    )
+  }, [searchText, allLocations, location])
 
   const filteredProperties = useMemo(() => {
     let result = properties.filter((property) => {
       const matchesSearch =
         !debouncedSearch ||
-        [property.title, property.location, property.type, property.amenities.join(' ')].join(' ').toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-        editDistance(debouncedSearch, property.location) <= 6
+        property.title.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+        property.location.toLowerCase().includes(debouncedSearch.toLowerCase())
 
       const matchesLocation = location === 'All Locations' || property.location === location
       const matchesType = propertyType === 'All Types' || property.type === propertyType
-      const matchesBudget = !budget || property.price <= Number(budget)
-      const matchesRating = property.rating >= Number(ratingFilter)
-      const matchesFurnished = !furnishedOnly || property.furnished
-      const matchesNearby = nearbyFilter === 'All' || property.nearby.includes(nearbyFilter)
+      const matchesBudget = !budget || property.priceValue <= Number(budget)
+      const matchesRating = (property.rating || 0) >= Number(ratingFilter)
+      const matchesFurnished = !furnishedOnly || property.furnished === 'Fully furnished' || property.furnished === 'Furnished'
+      const matchesNearby = nearbyFilter === 'All' || (property.amenities && property.amenities.includes(nearbyFilter))
 
       return (
         matchesSearch &&
@@ -68,11 +87,11 @@ function App() {
     })
 
     if (sortOption === 'price-asc') {
-      result = quickSort(result, (left, right) => left.price - right.price)
+      result = quickSort(result, (left, right) => left.priceValue - right.priceValue)
     } else if (sortOption === 'price-desc') {
-      result = quickSort(result, (left, right) => right.price - left.price)
+      result = quickSort(result, (left, right) => right.priceValue - left.priceValue)
     } else if (sortOption === 'rating-desc') {
-      result = quickSort(result, (left, right) => right.rating - left.rating)
+      result = quickSort(result, (left, right) => (right.rating || 0) - (left.rating || 0))
     } else {
       const ranked = result.map((property) => ({
         property,
@@ -83,7 +102,7 @@ function App() {
     }
 
     return result
-  }, [budget, debouncedSearch, furnishedOnly, location, nearbyFilter, propertyType, ratingFilter, sortOption])
+  }, [properties, budget, debouncedSearch, furnishedOnly, location, nearbyFilter, propertyType, ratingFilter, sortOption])
 
   const totalPages = Math.max(1, Math.ceil(filteredProperties.length / PAGE_SIZE))
   const paginatedProperties = filteredProperties.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
@@ -96,34 +115,28 @@ function App() {
     if (page > totalPages) setPage(totalPages)
   }, [page, totalPages])
 
-  useEffect(() => {
-    if (selectedProperty) setImageIndex(0)
-  }, [selectedProperty])
 
-  const allLocations = Array.from(new Set(properties.map((property) => property.location)))
-  const nearbyOptions = Array.from(new Set(properties.flatMap((property) => property.nearby)))
-
-  if (selectedProperty) {
+  if (loading) {
     return (
-      <main className="app-shell detail-shell">
-        <header className="topbar">
-          <div>
-            <p className="eyebrow">Property Browsing Module</p>
-            <h1>Find your next place with smart search</h1>
-          </div>
-        </header>
-        <PropertyDetails
-          property={selectedProperty}
-          imageIndex={imageIndex}
-          onImageChange={setImageIndex}
-          onBack={() => setSelectedProperty(null)}
-        />
-      </main>
+      <div className="app-shell" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
+        <p>Loading properties...</p>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="app-shell">
+        <p>Error: {error}</p>
+      </div>
     )
   }
 
   return (
     <main className="app-shell">
+      <Link to="/" className="back-button" style={{ display: 'inline-block', marginBottom: '20px', color: '#2563eb', textDecoration: 'none', fontWeight: 'bold' }}>
+        ← Back to home
+      </Link>
       <header className="topbar">
         <div>
           <p className="eyebrow">Property Browsing Module</p>
@@ -144,7 +157,7 @@ function App() {
           <div>
             <strong>
               {filteredProperties.length > 0
-                ? formatPrice(Math.min(...filteredProperties.map((property) => property.price)))
+                ? formatPrice(Math.min(...filteredProperties.map((property) => property.priceValue)))
                 : 'N/A'}
             </strong>
             <span>Lowest price</span>
@@ -186,7 +199,7 @@ function App() {
 
           <label>
             Property type
-            <select value={propertyType} onChange={(event) => setPropertyType(event.target.value as typeof propertyType)}>
+            <select value={propertyType} onChange={(event) => setPropertyType(event.target.value)}>
               {typeOptions.map((item) => (
                 <option key={item} value={item}>
                   {item}
@@ -211,7 +224,7 @@ function App() {
           </label>
 
           <label>
-            Nearby
+            Nearby/Amenities
             <select value={nearbyFilter} onChange={(event) => setNearbyFilter(event.target.value)}>
               <option value="All">All</option>
               {nearbyOptions.map((item) => (
@@ -229,7 +242,7 @@ function App() {
 
           <label>
             Sort by
-            <select value={sortOption} onChange={(event) => setSortOption(event.target.value as SortOption)}>
+            <select value={sortOption} onChange={(event) => setSortOption(event.target.value)}>
               <option value="recommended">Recommended</option>
               <option value="price-asc">Low to high</option>
               <option value="price-desc">High to low</option>
@@ -253,7 +266,7 @@ function App() {
 
       <section className={`listing-grid ${viewMode}`}>
         {paginatedProperties.map((property) => (
-          <PropertyCard key={property.id} property={property} viewMode={viewMode} onOpen={setSelectedProperty} />
+          <PropertyCard key={property.slug} {...property} viewMode={viewMode} />
         ))}
       </section>
 
@@ -264,4 +277,4 @@ function App() {
   )
 }
 
-export default App
+export default Listings

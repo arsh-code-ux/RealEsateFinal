@@ -133,8 +133,7 @@ req.query.keyword
 
 
 
-const resultPerPage=6;
-
+const resultPerPage = req.query.limit ? Number(req.query.limit) : 100;
 
 const apiFeatures=
 

@@ -1,4 +1,4 @@
-export function quickSort<T>(items: T[], compare: (left: T, right: T) => number): T[] {
+export function quickSort(items, compare) {
   if (items.length <= 1) return [...items]
 
   const [pivot, ...rest] = items
@@ -8,7 +8,7 @@ export function quickSort<T>(items: T[], compare: (left: T, right: T) => number)
   return [...quickSort(left, compare), pivot, ...quickSort(right, compare)]
 }
 
-export function editDistance(left: string, right: string): number {
+export function editDistance(left, right) {
   const a = left.toLowerCase()
   const b = right.toLowerCase()
   const matrix = Array.from({ length: a.length + 1 }, () => Array(b.length + 1).fill(0))
@@ -30,7 +30,7 @@ export function editDistance(left: string, right: string): number {
   return matrix[a.length][b.length]
 }
 
-export function formatPrice(value: number): string {
+export function formatPrice(value) {
   return new Intl.NumberFormat('en-IN', {
     style: 'currency',
     currency: 'INR',

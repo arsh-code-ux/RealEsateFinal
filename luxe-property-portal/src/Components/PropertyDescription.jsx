@@ -1,54 +1,8 @@
 import { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
-import { useApp } from "../context/AppContext";
-import { mapBackendProperty } from "../utils/mapBackendProperty";
+import { useParams } from "react-router-dom";
 
-const amenityIcons = {
-  'Lift': '🛗',
-  'Power backup': '⚡',
-  'Gym': '🏋️',
-  'Pool': '🏊',
-  'Parking': '🚗',
-  'Gigabit Fiber Wi-Fi': '🌐',
-  'Private Mini-Gym': '🏋️',
-  '100% Power Backup': '⚡',
-  'EV-Ready Parking': '🔌',
-  '24/7 Biometric Security': '🛡️',
-  'Weekly Housekeeping': '🧹',
-  'Garden': '🏡',
-  'Smart home': '📱',
-  'Servant quarter': '👤',
-  'Security': '🛡️',
-  'Club access': '🔑',
-  'Balcony': '🌅',
-  'Clubhouse': '🏢',
-  'Visitor parking': '🅿️',
-  'CCTV': '📹',
-  'Water softener': '💧'
-};
-
-const defaultReviews = [
-  {
-    id: 1,
-    name: "Arjun Kapoor",
-    role: "Product Manager at Google",
-    stayDuration: "6 months stay",
-    rating: 5,
-    comment: "The 'verified' signal isn't just marketing. The property looks exactly like the photos. Managing the lease was incredibly smooth. Highly recommend for any tech professional moving to Bangalore.",
-  },
-  {
-    id: 2,
-    name: "Sarah Liao",
-    role: "Tech Expat",
-    stayDuration: "1 year stay",
-    rating: 4,
-    comment: "Great location, right next to the best cafes. The biometric security gives peace of mind. Only small issue was the gym equipment took a week to fix once, but the management was responsive.",
-  }
-];
-
-export default function PropertyDetail() {
-  const { slug } = useParams(); // URL parameter is slug, which contains _id
-  const { isWishlisted, toggleWishlist, showToast } = useApp();
+export default function PropertyDescription() {
+  const { id } = useParams();
 
   // Core Component States
   const [property, setProperty] = useState(null);
@@ -72,13 +26,64 @@ export default function PropertyDetail() {
 
     const fetchPropertyData = async () => {
       try {
-        const response = await fetch(`/api/properties/${slug}`);
-        const data = await response.json();
-        if (!data.success) {
-          throw new Error(data.message || "Property listing signature matching parameter not found.");
+        await new Promise((resolve) => setTimeout(resolve, 800));
+
+        const mockApiResponse = {
+          id: "modern-luxury-koramangala",
+          title: "Modern Luxury Stay",
+          location: "Koramangala 4th Block, Bangalore",
+          price: 75000,
+          originalPrice: 82000,
+          discount: "8% OFF",
+          securityDeposit: 150000,
+          configuration: "3 BHK",
+          area: "1,850 sqft",
+          availableFrom: "15 Oct",
+          tenantType: "Family/Prof",
+          images: [
+            "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=1200",
+            "https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=1200",
+            "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=1200",
+          ],
+          description:
+            "Experience a new standard of high-end living in the heart of Koramangala 4th Block. This meticulously designed 3-BHK apartment caters specifically to the needs of tech professionals and expatriates seeking both convenience and luxury. Featuring a smart home system, high-speed fiber connectivity, and bespoke furniture, this residence bridges the gap between professional efficiency and domestic comfort.",
+          amenities: [
+            { name: "Gigabit Fiber Wi-Fi", icon: "🌐" },
+            { name: "Private Mini-Gym", icon: "🏋️" },
+            { name: "100% Power Backup", icon: "⚡" },
+            { name: "EV-Ready Parking", icon: "🔌" },
+            { name: "24/7 Biometric Security", icon: "🛡️" },
+            { name: "Weekly Housekeeping", icon: "🧹" },
+          ],
+          reviews: [
+            {
+              id: 1,
+              name: "Arjun Kapoor",
+              role: "Product Manager at Google",
+              stayDuration: "6 months stay",
+              rating: 5,
+              comment:
+                "The 'verified' signal isn't just marketing. The property looks exactly like the photos. Managing the lease was incredibly smooth. Highly recommend for any tech professional moving to Bangalore.",
+            },
+            {
+              id: 2,
+              name: "Sarah Liao",
+              role: "Tech Expat",
+              stayDuration: "1 year stay",
+              rating: 4,
+              comment:
+                "Great location, right next to the best cafes. The biometric security gives peace of mind. Only small issue was the gym equipment took a week to fix once, but the management was responsive.",
+            },
+          ],
+        };
+
+        if (id !== mockApiResponse.id) {
+          throw new Error(
+            "Property listing signature matching parameter not found.",
+          );
         }
-        const mapped = mapBackendProperty(data.data);
-        setProperty(mapped);
+
+        setProperty(mockApiResponse);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -87,7 +92,7 @@ export default function PropertyDetail() {
     };
 
     fetchPropertyData();
-  }, [slug]);
+  }, [id]);
 
   // Lightbox Navigation Functions
   const openLightbox = (index) => {
@@ -98,18 +103,18 @@ export default function PropertyDetail() {
   const handleNextImage = () => {
     if (!property) return;
     setCurrentImageIndex((prevIndex) =>
-      prevIndex === property.images.length - 1 ? 0 : prevIndex + 1
+      prevIndex === property.images.length - 1 ? 0 : prevIndex + 1,
     );
   };
 
   const handlePrevImage = () => {
     if (!property) return;
     setCurrentImageIndex((prevIndex) =>
-      prevIndex === 0 ? property.images.length - 1 : prevIndex - 1
+      prevIndex === 0 ? property.images.length - 1 : prevIndex - 1,
     );
   };
 
-  // Keyboard Arrow Keys for Lightbox navigation
+  // Handle Keyboard Arrow Keys for Lightbox navigation
   useEffect(() => {
     if (!isLightboxOpen) return;
 
@@ -127,38 +132,21 @@ export default function PropertyDetail() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleFormSubmit = async (e) => {
+  const handleFormSubmit = (e) => {
     e.preventDefault();
-    try {
-      // Simulate booking request or inquiry message
-      showToast("Sending message to landlord...", "info");
-      
-      const payload = {
-        propertyId: slug,
-        ...formData
-      };
-      
-      console.log("POST request payload package:", payload);
-      
-      // Artificial delay
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      showToast("Message successfully sent to landlord! 📬", "success");
-      setFormData({ name: "", email: "", requirement: "" });
-    } catch (err) {
-      showToast("Failed to send message. Please try again.", "error");
-    }
-  };
-
-  const handleVirtualTour = () => {
-    showToast("Virtual tour requested! We will coordinate with you shortly. 📞", "success");
+    console.log("POST request payload package:", {
+      propertyId: id,
+      ...formData,
+    });
+    alert("Inquiry successfully simulated! Data packet printed to console.");
+    setFormData({ name: "", email: "", requirement: "" });
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 page-content">
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="flex flex-col items-center space-y-3">
-          <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+          <div className="w-10 h-10 border-4 border-indigo-900 border-t-transparent rounded-full animate-spin"></div>
           <p className="text-sm font-bold text-slate-500">
             Retrieving Listing Parameters...
           </p>
@@ -169,88 +157,82 @@ export default function PropertyDetail() {
 
   if (error || !property) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 p-4 page-content">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 p-4">
         <h2 className="text-xl font-bold text-slate-800">
           Error Loading Property Details
         </h2>
-        <p className="text-sm text-slate-500 mb-4">
+        <p className="text-sm text-slate-500">
           {error || "Could not fetch listing metadata."}
         </p>
-        <Link to="/" className="btn btn-primary">
-          Back to Home
-        </Link>
       </div>
     );
   }
 
-  const saved = isWishlisted(property.slug);
-
   return (
-    <div className="bg-slate-50 min-h-screen text-slate-800 font-sans antialiased page-content">
-      {/* Detail Header / Title section */}
-      <div className="max-w-6xl mx-auto px-4 md:px-6 pt-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <Link to="/listings" className="link-back text-xs font-bold uppercase tracking-wider mb-2 inline-block">
-            ← Back to listings
-          </Link>
-          <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">
-            {property.title}
-          </h1>
-          <p className="text-sm text-slate-500 mt-1 flex items-center">
-            <span className="text-indigo-600 mr-1.5">📍</span>
-            {property.location}
-          </p>
+    <div className="bg-slate-50 min-h-screen text-slate-800 font-sans antialiased">
+      {/* Cleaned Navbar (Buttons Removed) */}
+      <nav className="bg-white border-b border-slate-200 sticky top-0 z-50 px-6 py-4 flex justify-between items-center">
+        <div className="flex items-center space-x-8">
+          <span className="text-xl font-black text-indigo-900 tracking-tight">
+            Luxe Bangalore
+          </span>
+          <div className="hidden md:flex space-x-6 text-xs font-bold text-slate-500 uppercase tracking-wider">
+            <a
+              href="#"
+              className="text-indigo-600 border-b-2 border-indigo-600 pb-1"
+            >
+              Browse
+            </a>
+            <a href="#" className="hover:text-indigo-600">
+              Verified
+            </a>
+            <a href="#" className="hover:text-indigo-600">
+              Neighborhoods
+            </a>
+            <a href="#" className="hover:text-indigo-600">
+              Invest
+            </a>
+          </div>
         </div>
-
-        <button
-          type="button"
-          onClick={() => toggleWishlist(property.slug, property.title)}
-          className={`flex items-center space-x-2 px-4 py-2 border rounded-full text-xs font-bold transition shadow-sm bg-white ${
-            saved ? "text-red-500 border-red-200" : "text-slate-500 border-slate-200 hover:bg-slate-50"
-          }`}
-        >
-          <span>{saved ? "❤️ Saved" : "♡ Save to Wishlist"}</span>
-        </button>
-      </div>
+      </nav>
 
       {/* Main Content Dashboard */}
       <main className="max-w-6xl mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
           {/* Layout Image Grid (Clickable to open lightbox) */}
-          <div className="grid grid-cols-3 gap-3 rounded-xl overflow-hidden h-[240px] md:h-[350px] shadow-sm">
+          <div className="grid grid-cols-3 gap-3 rounded-xl overflow-hidden h-[240px] md:h-[350px]">
             <div
-              className="col-span-2 bg-slate-200 cursor-pointer overflow-hidden relative group"
+              className="col-span-2 bg-slate-200 cursor-pointer overflow-hidden"
               onClick={() => openLightbox(0)}
             >
               <img
                 src={property.images[0]}
                 alt="Living Room View"
-                className="w-full h-full object-cover group-hover:scale-[1.02] transition duration-300"
+                className="w-full h-full object-cover hover:scale-[1.02] transition duration-300"
               />
-              <div className="absolute inset-0 bg-black/5 group-hover:bg-black/0 transition duration-300"></div>
             </div>
             <div className="grid grid-rows-2 gap-3">
               <div
-                className="bg-slate-200 overflow-hidden cursor-pointer relative group"
+                className="bg-slate-200 overflow-hidden cursor-pointer"
                 onClick={() => openLightbox(1)}
               >
                 <img
-                  src={property.images[1] || property.images[0]}
-                  alt="Interior View 1"
-                  className="w-full h-full object-cover group-hover:scale-[1.03] transition duration-300"
+                  src={property.images[1]}
+                  alt="Kitchen View"
+                  className="w-full h-full object-cover hover:scale-[1.03] transition duration-300"
                 />
               </div>
               <div
                 className="bg-slate-200 overflow-hidden relative group cursor-pointer"
-                onClick={() => openLightbox(Math.min(2, property.images.length - 1))}
+                onClick={() => openLightbox(2)}
               >
                 <img
-                  src={property.images[2] || property.images[0]}
-                  alt="Interior View 2"
+                  src={property.images[2]}
+                  alt="Bedroom View"
                   className="w-full h-full object-cover brightness-90 group-hover:brightness-75 transition duration-300"
                 />
                 <div className="absolute inset-0 flex flex-col justify-center items-center text-white font-bold text-xs md:text-sm bg-black/20 group-hover:bg-black/40 transition">
-                  <span>View Gallery</span>
+                  <span>View Full Gallery</span>
                 </div>
               </div>
             </div>
@@ -263,7 +245,7 @@ export default function PropertyDetail() {
                 Configuration
               </p>
               <p className="text-xs md:text-sm font-black text-slate-700 mt-1">
-                {property.beds} BHK
+                {property.configuration}
               </p>
             </div>
             <div>
@@ -271,23 +253,23 @@ export default function PropertyDetail() {
                 Area
               </p>
               <p className="text-xs md:text-sm font-black text-slate-700 mt-1">
-                {property.sqft.toLocaleString('en-IN')} sqft
+                {property.area}
               </p>
             </div>
             <div>
               <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">
-                Property Type
+                Available From
               </p>
               <p className="text-xs md:text-sm font-black text-slate-700 mt-1">
-                {property.type}
+                {property.availableFrom}
               </p>
             </div>
             <div>
               <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">
-                Furnished
+                Tenant Type
               </p>
               <p className="text-xs md:text-sm font-black text-slate-700 mt-1">
-                {property.furnished}
+                {property.tenantType}
               </p>
             </div>
           </div>
@@ -297,7 +279,7 @@ export default function PropertyDetail() {
             <h3 className="text-base font-black text-slate-900 mb-2">
               Property Overview
             </h3>
-            <p className="text-slate-600 text-sm leading-relaxed whitespace-pre-line">
+            <p className="text-slate-600 text-sm leading-relaxed">
               {property.description}
             </p>
           </div>
@@ -308,14 +290,14 @@ export default function PropertyDetail() {
               Amenities
             </h3>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              {property.amenities.map((amenityName, index) => (
+              {property.amenities.map((amenity, index) => (
                 <div
                   key={index}
                   className="flex items-center space-x-3 p-3 bg-slate-50 rounded-xl border border-slate-100"
                 >
-                  <span className="text-lg">{amenityIcons[amenityName] || '✨'}</span>
+                  <span className="text-lg">{amenity.icon}</span>
                   <span className="text-xs font-bold text-slate-700">
-                    {amenityName}
+                    {amenity.name}
                   </span>
                 </div>
               ))}
@@ -326,16 +308,11 @@ export default function PropertyDetail() {
           <div className="bg-white border border-slate-100 rounded-xl p-6 shadow-sm space-y-4">
             <div className="flex justify-between items-center">
               <h3 className="text-base font-black text-slate-900">Location</h3>
-              <a
-                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(property.location)}`}
-                target="_blank"
-                rel="noreferrer"
-                className="text-indigo-600 text-xs font-bold cursor-pointer hover:underline"
-              >
+              <span className="text-indigo-600 text-xs font-bold cursor-pointer">
                 Open in Google Maps ↗
-              </a>
+              </span>
             </div>
-            <div className="relative h-44 bg-blue-50 border border-slate-100 rounded-xl overflow-hidden flex items-center justify-center">
+            <div className="relative h-44 bg-emerald-50 border border-slate-100 rounded-xl overflow-hidden flex items-center justify-center">
               <div className="absolute inset-0 bg-opacity-20 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:16px_16px]"></div>
               <div className="bg-white shadow-sm border border-slate-200 px-4 py-2 rounded-full font-bold text-xs text-slate-800 flex items-center space-x-2 z-10">
                 <span className="text-indigo-600">📍</span>
@@ -351,12 +328,12 @@ export default function PropertyDetail() {
                 Tenant Reviews
               </h3>
               <div className="flex items-center space-x-1 text-xs font-bold bg-amber-50 text-amber-700 px-2 py-0.5 rounded">
-                <span>★ {property.rating}</span>
-                <span className="text-slate-400 font-medium">({property.reviewsCount} Reviews)</span>
+                <span>★ 4.8</span>
+                <span className="text-slate-400 font-medium">(24 Reviews)</span>
               </div>
             </div>
             <div className="space-y-4 divide-y divide-slate-100">
-              {defaultReviews.map((review) => (
+              {property.reviews.map((review) => (
                 <div key={review.id} className="pt-4 first:pt-0 space-y-2">
                   <div className="flex justify-between items-start">
                     <div>
@@ -386,7 +363,7 @@ export default function PropertyDetail() {
             <div>
               <div className="flex items-baseline space-x-2">
                 <span className="text-2xl font-black text-slate-900">
-                  {property.price}
+                  ₹{property.price.toLocaleString("en-IN")}
                 </span>
                 <span className="text-xs text-slate-400 font-medium">
                   / month
@@ -421,10 +398,7 @@ export default function PropertyDetail() {
               </div>
             </div>
 
-            <button
-              onClick={handleVirtualTour}
-              className="w-full bg-indigo-600 text-white py-3 rounded-xl text-xs font-bold uppercase tracking-wider shadow-sm hover:bg-indigo-700 transition"
-            >
+            <button className="w-full bg-indigo-600 text-white py-3 rounded-xl text-xs font-bold uppercase tracking-wider shadow-sm hover:bg-indigo-700 transition">
               Schedule Virtual Tour
             </button>
           </div>
@@ -433,17 +407,6 @@ export default function PropertyDetail() {
             <h4 className="text-xs font-black text-slate-900 uppercase tracking-wider">
               Message Landlord
             </h4>
-            {property.landlord && (
-              <div className="flex items-center space-x-3 p-3 bg-slate-50 rounded-xl border border-slate-100 mb-2">
-                <div className="w-8 h-8 rounded-full bg-indigo-600 text-white font-bold flex items-center justify-center text-xs">
-                  {property.landlord.name ? property.landlord.name.charAt(0) : "L"}
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-slate-800">{property.landlord.name}</p>
-                  <p className="text-[10px] text-slate-400">Owner Verified</p>
-                </div>
-              </div>
-            )}
             <form onSubmit={handleFormSubmit} className="space-y-3">
               <input
                 type="text"

@@ -1,18 +1,57 @@
+import { Link, useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
+import { formatPrice } from '../utils/algorithms'
 
-function PropertyCard({ slug, image, title, price, location, beds, baths, sqft }) {
+function PropertyCard(props) {
+  const { slug, image, title, price, location, beds, baths, sqft, viewMode, _id, type, rating, description, furnished, amenities, images } = props
   const { isWishlisted, toggleWishlist } = useApp()
-  const saved = isWishlisted(slug)
+  const saved = isWishlisted(slug || _id)
+  const navigate = useNavigate()
 
   const onHeartClick = (e) => {
     e.preventDefault()
     e.stopPropagation()
-    toggleWishlist(slug, title)
+    toggleWishlist(slug || _id, title)
   }
 
+  const handleOpen = (e) => {
+    e.preventDefault()
+    navigate(`/property/${slug || _id}`)
+  }
+
+  // If viewMode is provided, we use the Mahi-branch layout (Listings page)
+  if (viewMode) {
+    const mainImage = images && images.length > 0 ? images[0] : image
+    return (
+      <article className={`property-card ${viewMode}`}>
+        <img className="property-image" src={mainImage} alt={title} />
+        <div className="property-card-body">
+          <div className="property-topline">
+            <span className="pill">{type || 'Apartment'}</span>
+            <span className="rating">★ {(rating || 4.5).toFixed(1)}</span>
+          </div>
+          <h3>{title}</h3>
+          <p className="muted">{location}</p>
+          <p className="description">{description ? (description.length > 100 ? description.substring(0, 100) + '...' : description) : `${beds} BHK in ${location}`}</p>
+          <div className="meta-row">
+            <span>{furnished || 'Semi-furnished'}</span>
+            <span>{beds} Beds • {baths} Baths</span>
+          </div>
+          <div className="card-footer">
+            <strong>{formatPrice(props.priceValue || parseInt(price.replace(/[^0-9]/g, '')) || 0)}</strong>
+            <button type="button" onClick={handleOpen}>
+              View details
+            </button>
+          </div>
+        </div>
+      </article>
+    )
+  }
+
+  // Otherwise we use the original layout (Home page)
   return (
-    <article className="card-property-wrap">
-      <div className="card-property">
+    <Link to={`/property/${slug || _id}`} className="card-property-wrap" style={{ textDecoration: 'none', color: 'inherit' }}>
+      <article className="card-property">
         <div className="card-property__image-wrap">
           <span className="card-property__verified">✓ Verified</span>
           <img src={image} alt={title} className="card-property__image" />
@@ -37,8 +76,8 @@ function PropertyCard({ slug, image, title, price, location, beds, baths, sqft }
             <span>{sqft} sqft</span>
           </div>
         </div>
-      </div>
-    </article>
+      </article>
+    </Link>
   )
 }
 
