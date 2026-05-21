@@ -9,16 +9,13 @@ require(
 "../middleware/authMiddleware"
 );
 
-
 const{
 
-createChat,
-getMessages,
-getChats,
-sendMessage
+createBooking,
+getBookings
 
 }=require(
-"../controllers/chatController"
+"../controllers/bookingController"
 );
 
 
@@ -26,33 +23,15 @@ sendMessage
 router.post(
 "/",
 protect,
-createChat
+createBooking
 );
-
 
 
 router.get(
 "/",
 protect,
-getChats
+getBookings
 );
-
-
-
-router.post(
-"/message",
-protect,
-sendMessage
-);
-
-
-
-router.get(
-"/:chatId",
-protect,
-getMessages
-);
-
 
 
 module.exports=

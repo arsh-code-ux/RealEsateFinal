@@ -1,16 +1,103 @@
-# React + Vite
+# Real Estate & Accommodation System
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Full-stack property rental platform featuring a React + Vite frontend and an Express + Node.js backend.
 
-Currently, two official plugins are available:
+## Tech Stack
+- **Frontend**: React, Vite, React Router, TailwindCSS/Vanilla CSS
+- **Backend**: Node.js, Express, MongoDB, Socket.io, Cloudinary, Razorpay, JWT
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+---
 
-## React Compiler
+## Features
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- Authentication (JWT + Refresh Token)
+- Property CRUD
+- Search + Filter + Pagination
+- Reviews & Ratings
+- Wishlist
+- Nearby Property Search
+- Recommendations
+- Notifications
+- Visit Scheduling
+- Real-time Chat
+- Razorpay Payments
+- Admin Dashboard
 
-## Expanding the ESLint configuration
+---
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Installation & Setup
+
+### Repository Setup
+```bash
+npm install
+```
+
+### Backend Setup
+Go to the `backend` directory and configure the environment:
+```bash
+cd backend
+npm install
+```
+Create a `backend/.env` file with appropriate configuration.
+Run the backend server:
+```bash
+npm run dev # or npm start
+```
+
+### Frontend Setup
+In the root directory, run:
+```bash
+npm run dev
+```
+
+---
+
+## API Routes
+
+### Auth
+```txt
+/api/auth/register
+/api/auth/login
+/api/auth/logout
+/api/auth/forgot-password
+/api/auth/reset-password/:token
+/api/auth/refresh-token
+```
+
+### Users
+```txt
+/api/users/profile
+/api/users/wishlist
+```
+
+### Properties
+```txt
+/api/properties
+/api/properties/nearby
+```
+
+### Reviews
+```txt
+/api/reviews
+```
+
+### Chat
+```txt
+/api/chat
+```
+
+### Payments
+```txt
+/api/payments
+```
+
+### Notifications
+```txt
+/api/notifications
+```
+
+### Bookings
+```txt
+/api/bookings
+```
+
