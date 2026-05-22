@@ -1,10 +1,13 @@
 const Property = require("../models/Property");
 const User = require("../models/User");
+const mongoose = require("mongoose");
 
 const ApiFeatures = require("../utils/apiFeatures");
 
 const calculateDistance =
 require("../utils/shortestPath");
+
+const DEFAULT_PROPERTY_IMAGE = "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?q=80&w=1973&auto=format&fit=crop";
 
 
 
@@ -20,6 +23,18 @@ exports.createProperty =
 async(req,res)=>{
 
 try{
+
+if(!req.user){
+
+return res.status(401).json({
+
+success:false,
+
+message:"Not authorized"
+
+});
+
+}
 
 const{
 
@@ -40,13 +55,14 @@ const property =
 await Property.create({
 
 title,
+
 description,
 location,
 city,
 price,
 propertyType,
 amenities,
-images,
+images: Array.isArray(images) && images.length > 0 ? images : [DEFAULT_PROPERTY_IMAGE],
 coordinates,
 
 landlord:req.user._id
@@ -80,7 +96,6 @@ message:error.message
 }
 
 };
-
 
 
 
@@ -198,7 +213,6 @@ message:error.message
 
 
 
-
 /*
 ========================================
 Get Single Property
@@ -213,6 +227,13 @@ exports.getSingleProperty=
 async(req,res)=>{
 
 try{
+
+if(!mongoose.isValidObjectId(req.params.id)){
+  return res.status(404).json({
+    success:false,
+    message:'Property not found'
+  })
+}
 
 
 const property=
@@ -299,7 +320,6 @@ message:error.message
 
 
 
-
 /*
 ========================================
 Update Property
@@ -335,7 +355,6 @@ message:
 });
 
 }
-
 
 
 /*
@@ -415,7 +434,6 @@ message:error.message
 
 
 
-
 /*
 ========================================
 Delete Property
@@ -425,91 +443,35 @@ DELETE:
 */
 
 exports.deleteProperty=
-
 async(req,res)=>{
 
 try{
 
 const property=
-
-await Property.findById(
-req.params.id
-);
-
+await Property.findById(req.params.id)
 
 if(!property){
-
-return res.status(404)
-.json({
-
-success:false,
-
-message:
-"Property not found"
-
-});
-
+  return res.status(404).json({success:false,message:'Property not found'})
 }
 
-
-
-/*
-owner check
-*/
-
-if(
-
-property.landlord.toString()
-
-!==req.user._id.toString()
-
-){
-
-return res.status(403)
-.json({
-
-success:false,
-
-message:
-"Not authorized"
-
-});
-
+if(property.landlord.toString() !== req.user._id.toString()){
+  return res.status(403).json({success:false,message:'Not authorized'})
 }
 
-
-
-await property.deleteOne();
-
-
+await property.deleteOne()
 
 res.status(200).json({
+  success:true,
+  message:'Property deleted successfully'
+})
 
-success:true,
-
-message:
-"Property deleted successfully"
-
-});
-
+} catch(error){
+  res.status(500).json({
+    success:false,
+    message:error.message
+  })
 }
-
-catch(error){
-
-res.status(500).json({
-
-success:false,
-
-message:error.message
-
-});
-
 }
-
-};
-
-
-
 
 
 
@@ -517,8 +479,6 @@ message:error.message
 /*
 ========================================
 Nearby Properties
-GET:
-/api/properties/nearby
 ========================================
 */
 
@@ -527,62 +487,25 @@ async(req,res)=>{
 
 try{
 
-const{
+const property=
+await Property.findById(req.query.propertyId)
 
-latitude,
-longitude
-
-}=req.query;
-
-
-const properties=
-await Property.find();
-
-
-const nearby=
-
-properties.filter(
-(property)=>{
-
-
-if(
-!property.coordinates
-)return false;
-
-
-const distance=
-
-calculateDistance(
-
-parseFloat(latitude),
-
-parseFloat(longitude),
-
-property.coordinates.latitude,
-
-property.coordinates.longitude
-
-);
-
-
-return distance<=5;
-
-});
-
-
-res.status(200).json({
-
-success:true,
-
-count:
-nearby.length,
-
-data:nearby
-
-});
-
+if(!property){
+  return res.status(404).json({success:false,message:'Property not found'})
 }
 
+const nearby=
+await Property.find({
+  _id:{ $ne: property._id }
+}).limit(10)
+
+res.status(200).json({
+  success:true,
+  count: nearby.length,
+  data: nearby
+})
+
+}
 catch(error){
 
 res.status(500).json({
@@ -591,8 +514,7 @@ success:false,
 
 message:error.message
 
-});
+})
 
 }
-
-};
+}

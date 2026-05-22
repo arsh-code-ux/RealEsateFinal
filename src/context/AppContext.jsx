@@ -16,7 +16,19 @@ function loadWishlist() {
 function loadAuthUser() {
   try {
     const raw = localStorage.getItem(AUTH_KEY)
-    return raw ? JSON.parse(raw) : null
+    if (!raw) return null
+
+    const parsed = JSON.parse(raw)
+    const token = parsed?.token
+
+    // Old demo sessions stored a fake token like token_xxx.
+    // Real backend sessions use JWTs with three dot-separated parts.
+    if (typeof token !== 'string' || token.split('.').length !== 3) {
+      localStorage.removeItem(AUTH_KEY)
+      return null
+    }
+
+    return parsed
   } catch {
     return null
   }

@@ -2,6 +2,27 @@ import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useApp } from "../context/AppContext";
 import { mapBackendProperty } from "../utils/mapBackendProperty";
+import { properties as localProperties } from "../data/properties";
+
+function mapLocalProperty(property) {
+  const parsedPrice = Number(String(property.price || "").replace(/[^0-9.]/g, ""));
+  const rawPrice = property.priceValue ?? (Number.isFinite(parsedPrice) ? parsedPrice : 0);
+
+  return {
+    ...property,
+    _id: property.slug,
+    images: property.images || (property.image ? [property.image] : []),
+    price: `₹${rawPrice.toLocaleString("en-IN")}`,
+    priceValue: rawPrice,
+    originalPrice: Math.round(rawPrice * 1.1),
+    discount: "9% OFF",
+    securityDeposit: rawPrice * 2,
+    type: property.type || 'Apartment',
+    furnished: property.furnished || 'Semi-furnished',
+    rating: property.rating || 4.5,
+    reviewsCount: property.reviewsCount || 10,
+  };
+}
 
 const amenityIcons = {
   'Lift': '🛗',
@@ -71,6 +92,14 @@ export default function PropertyDetail() {
     setError(null);
 
     const fetchPropertyData = async () => {
+      const localProperty = localProperties.find((item) => item.slug === slug);
+
+      if (localProperty) {
+        setProperty(mapLocalProperty(localProperty));
+        setLoading(false);
+        return;
+      }
+
       try {
         const response = await fetch(`/api/properties/${slug}`);
         const data = await response.json();

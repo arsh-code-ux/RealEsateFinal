@@ -1,9 +1,10 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { Pagination } from '../components/Pagination'
 import PropertyCard from '../components/PropertyCard'
 import { quickSort, editDistance, formatPrice } from '../utils/algorithms'
 import { mapBackendProperty } from '../utils/mapBackendProperty'
+import { properties as fallbackProperties } from '../data/properties'
 import './Listings.css'
 
 const PAGE_SIZE = 4
@@ -12,6 +13,8 @@ function Listings() {
   const [properties, setProperties] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [searchParams] = useSearchParams()
+  const showAll = searchParams.get('view') === 'all'
 
   const [searchText, setSearchText] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
@@ -25,6 +28,10 @@ function Listings() {
   const [viewMode, setViewMode] = useState('grid')
   const [page, setPage] = useState(1)
 
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [])
+
   // Fetch properties from backend
   useEffect(() => {
     setLoading(true)
@@ -33,14 +40,16 @@ function Listings() {
       .then(data => {
         if (data.success) {
           const mapped = data.data.map(mapBackendProperty)
-          setProperties(mapped)
+          setProperties(mapped.length > 0 ? mapped : fallbackProperties)
         } else {
-          setError('Failed to fetch properties')
+          setProperties(fallbackProperties)
+          setError(null)
         }
         setLoading(false)
       })
       .catch(err => {
-        setError(err.message)
+        setProperties(fallbackProperties)
+        setError(null)
         setLoading(false)
       })
   }, [])
@@ -104,12 +113,18 @@ function Listings() {
     return result
   }, [properties, budget, debouncedSearch, furnishedOnly, location, nearbyFilter, propertyType, ratingFilter, sortOption])
 
-  const totalPages = Math.max(1, Math.ceil(filteredProperties.length / PAGE_SIZE))
-  const paginatedProperties = filteredProperties.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+  const totalPages = showAll ? 1 : Math.max(1, Math.ceil(filteredProperties.length / PAGE_SIZE))
+  const paginatedProperties = showAll
+    ? filteredProperties
+    : filteredProperties.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
   useEffect(() => {
     setPage(1)
   }, [budget, debouncedSearch, furnishedOnly, location, nearbyFilter, propertyType, ratingFilter, sortOption, viewMode])
+
+  useEffect(() => {
+    if (showAll) setPage(1)
+  }, [showAll])
 
   useEffect(() => {
     if (page > totalPages) setPage(totalPages)
@@ -140,9 +155,11 @@ function Listings() {
       <header className="topbar">
         <div>
           <p className="eyebrow">Property Browsing Module</p>
-          <h1>Discover listings, compare options, and book faster</h1>
+          <h1>{showAll ? 'All listings available now' : 'Discover listings, compare options, and book faster'}</h1>
           <p className="subcopy">
-            Grid or list layouts, pagination, live filters, and quick detail access powered by edit-distance suggestions and Quick Sort.
+            {showAll
+              ? 'You are viewing every matching property in one scrollable list.'
+              : 'Grid or list layouts, pagination, live filters, and quick detail access powered by edit-distance suggestions and Quick Sort.'}
           </p>
         </div>
         <div className="stats-row">
@@ -272,7 +289,7 @@ function Listings() {
 
       {filteredProperties.length === 0 && <div className="empty-state">No properties match the current filters.</div>}
 
-      <Pagination currentPage={page} totalPages={totalPages} onChange={setPage} />
+      {!showAll && <Pagination currentPage={page} totalPages={totalPages} onChange={setPage} />}
     </main>
   )
 }

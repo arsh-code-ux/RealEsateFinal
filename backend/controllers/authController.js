@@ -38,9 +38,40 @@ const{
 name,
 email,
 password,
-role
+role,
+adminPasskey
 
 }=req.body;
+
+const adminSignupPasskey = process.env.ADMIN_SIGNUP_PASSKEY || process.env.ADMIN_PASSKEY || 'ADMIN@2026';
+
+if(role === 'admin'){
+
+if(!adminPasskey){
+
+return res.status(400).json({
+
+success:false,
+
+message:'Admin passkey is required'
+
+});
+
+}
+
+if(adminPasskey !== adminSignupPasskey){
+
+return res.status(403).json({
+
+success:false,
+
+message:'Invalid admin passkey'
+
+});
+
+}
+
+}
 
 
 const existingUser=
@@ -281,7 +312,6 @@ message:error.message
 
 
 
-
 /*
 ================================
 LOGOUT
@@ -344,8 +374,6 @@ message:error.message
 
 
 
-
-
 /*
 ================================
 FORGOT PASSWORD
@@ -391,38 +419,7 @@ const resetToken=
 user.getResetPasswordToken();
 
 
-await user.save({
-
-validateBeforeSave:false
-
-});
-
-
-
-const resetUrl=
-
-`${req.protocol}://${req.get("host")}/api/auth/reset-password/${resetToken}`;
-
-
-
-const message=
-
-`Password reset link:
-
-${resetUrl}`;
-
-
-
-await sendEmail(
-
-user.email,
-
-"Password Reset",
-
-message
-
-);
-
+await user.save({validateBeforeSave:false});
 
 
 res.status(200)
@@ -431,7 +428,9 @@ res.status(200)
 success:true,
 
 message:
-"Password reset email sent"
+"Reset token generated",
+
+resetToken
 
 });
 
@@ -439,13 +438,10 @@ message:
 
 catch(error){
 
-res.status(500)
-.json({
+res.status(500).json({
 
 success:false,
-
 message:error.message
-
 });
 
 }
@@ -453,238 +449,74 @@ message:error.message
 };
 
 
+exports.resetPassword = async (req, res) => {
+  try {
+    const hashedToken = crypto.createHash('sha256').update(req.params.token).digest('hex')
+    const user = await User.findOne({
+      resetPasswordToken: hashedToken,
+      resetPasswordExpire: { $gt: Date.now() },
+    })
 
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: 'Token is invalid or expired',
+      })
+    }
 
+    user.password = await bcrypt.hash(req.body.password, 10)
+    user.resetPasswordToken = undefined
+    user.resetPasswordExpire = undefined
+    await user.save()
 
-
-
-/*
-================================
-RESET PASSWORD
-PUT:
-/api/auth/reset-password/:token
-================================
-*/
-
-exports.resetPassword=
-async(req,res)=>{
-
-try{
-
-
-const resetToken=
-
-crypto
-.createHash("sha256")
-
-.update(
-req.params.token
-)
-
-.digest("hex");
-
-
-
-const user=
-
-await User.findOne({
-
-resetPasswordToken:
-resetToken,
-
-resetPasswordExpire:{
-$gt:Date.now()
+    return res.status(200).json({
+      success: true,
+      message: 'Password reset successfully',
+    })
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    })
+  }
 }
 
-});
+exports.refreshToken = async (req, res) => {
+  try {
+    const token = req.body.refreshToken || req.headers.authorization?.split(' ')[1]
 
+    if (!token) {
+      return res.status(400).json({
+        success: false,
+        message: 'Refresh token is required',
+      })
+    }
 
-if(!user){
+    const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET)
+    const user = await User.findById(decoded.id)
 
-return res.status(400)
-.json({
+    if (!user || user.refreshToken !== token) {
+      return res.status(401).json({
+        success: false,
+        message: 'Not authorized',
+      })
+    }
 
-success:false,
+    const accessToken = generateAccessToken(user._id)
+    const refreshToken = generateRefreshToken(user._id)
 
-message:
-"Invalid or expired token"
+    user.refreshToken = refreshToken
+    await user.save()
 
-});
-
+    return res.status(200).json({
+      success: true,
+      accessToken,
+      refreshToken,
+    })
+  } catch (error) {
+    return res.status(401).json({
+      success: false,
+      message: 'Not authorized',
+    })
+  }
 }
-
-
-
-const hashedPassword=
-
-await bcrypt.hash(
-
-req.body.password,
-
-10
-
-);
-
-
-user.password=
-hashedPassword;
-
-
-user.resetPasswordToken=
-undefined;
-
-user.resetPasswordExpire=
-undefined;
-
-
-await user.save();
-
-
-
-res.status(200)
-.json({
-
-success:true,
-
-message:
-"Password updated successfully"
-
-});
-
-}
-
-catch(error){
-
-res.status(500)
-.json({
-
-success:false,
-
-message:error.message
-
-});
-
-}
-
-};
-
-
-
-
-
-
-
-
-/*
-================================
-REFRESH TOKEN
-POST:
-/api/auth/refresh-token
-================================
-*/
-
-exports.refreshToken=
-async(req,res)=>{
-
-try{
-
-const{
-
-refreshToken
-
-}=req.body;
-
-
-
-if(!refreshToken){
-
-return res.status(401)
-.json({
-
-success:false,
-
-message:
-"Refresh token required"
-
-});
-
-}
-
-
-
-const decoded=
-
-jwt.verify(
-
-refreshToken,
-
-process.env.JWT_REFRESH_SECRET
-
-);
-
-
-
-const user=
-
-await User.findById(
-decoded.id
-);
-
-
-
-if(
-
-!user ||
-
-user.refreshToken
-!==refreshToken
-
-){
-
-return res.status(401)
-.json({
-
-success:false,
-
-message:
-"Invalid refresh token"
-
-});
-
-}
-
-
-
-const accessToken=
-
-generateAccessToken(
-user._id
-);
-
-
-
-res.status(200)
-.json({
-
-success:true,
-
-accessToken
-
-});
-
-}
-
-catch(error){
-
-res.status(500)
-.json({
-
-success:false,
-
-message:error.message
-
-});
-
-}
-
-};

@@ -19,6 +19,13 @@ async(req,res)=>{
 
 try{
 
+if(!razorpay){
+	return res.status(503).json({
+		success:false,
+		message:'Payment service is not configured'
+	});
+}
+
 const{
 
 amount,
@@ -102,6 +109,13 @@ exports.verifyPayment=
 async(req,res)=>{
 
 try{
+
+if(!process.env.RAZORPAY_KEY_SECRET){
+	return res.status(503).json({
+		success:false,
+		message:'Payment service is not configured'
+	});
+}
 
 const{
 

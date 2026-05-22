@@ -2,11 +2,21 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import { formatPrice } from '../utils/algorithms'
 
+const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?q=80&w=1973&auto=format&fit=crop'
+
+function getSafePriceValue(price, priceValue) {
+  if (typeof priceValue === 'number' && Number.isFinite(priceValue)) return priceValue
+  const parsed = Number(String(price || '').replace(/[^0-9.]/g, ''))
+  return Number.isFinite(parsed) ? parsed : 0
+}
+
 function PropertyCard(props) {
   const { slug, image, title, price, location, beds, baths, sqft, viewMode, _id, type, rating, description, furnished, amenities, images } = props
   const { isWishlisted, toggleWishlist } = useApp()
   const saved = isWishlisted(slug || _id)
   const navigate = useNavigate()
+  const safeImage = (images && images[0]) || image || FALLBACK_IMAGE
+  const safePriceValue = getSafePriceValue(price, props.priceValue)
 
   const onHeartClick = (e) => {
     e.preventDefault()
@@ -21,24 +31,30 @@ function PropertyCard(props) {
 
   // If viewMode is provided, we use the Mahi-branch layout (Listings page)
   if (viewMode) {
-    const mainImage = images && images.length > 0 ? images[0] : image
     return (
       <article className={`property-card ${viewMode}`}>
-        <img className="property-image" src={mainImage} alt={title} />
+        <img
+          className="property-image"
+          src={safeImage}
+          alt={title}
+          onError={(event) => {
+            event.currentTarget.src = FALLBACK_IMAGE
+          }}
+        />
         <div className="property-card-body">
           <div className="property-topline">
             <span className="pill">{type || 'Apartment'}</span>
             <span className="rating">★ {(rating || 4.5).toFixed(1)}</span>
           </div>
-          <h3>{title}</h3>
-          <p className="muted">{location}</p>
+          <h3 title={title}>{title}</h3>
+          <p className="muted" title={location}>{location}</p>
           <p className="description">{description ? (description.length > 100 ? description.substring(0, 100) + '...' : description) : `${beds} BHK in ${location}`}</p>
           <div className="meta-row">
             <span>{furnished || 'Semi-furnished'}</span>
             <span>{beds} Beds • {baths} Baths</span>
           </div>
           <div className="card-footer">
-            <strong>{formatPrice(props.priceValue || parseInt(price.replace(/[^0-9]/g, '')) || 0)}</strong>
+            <strong>{formatPrice(safePriceValue)}</strong>
             <button type="button" onClick={handleOpen}>
               View details
             </button>
@@ -54,7 +70,14 @@ function PropertyCard(props) {
       <article className="card-property">
         <div className="card-property__image-wrap">
           <span className="card-property__verified">✓ Verified</span>
-          <img src={image} alt={title} className="card-property__image" />
+          <img
+            src={safeImage}
+            alt={title}
+            className="card-property__image"
+            onError={(event) => {
+              event.currentTarget.src = FALLBACK_IMAGE
+            }}
+          />
           <button
             type="button"
             className={`card-property__heart ${saved ? 'card-property__heart--active' : ''}`}
@@ -67,8 +90,8 @@ function PropertyCard(props) {
 
         <div className="card-property__body">
           <p className="card-property__price">{price}</p>
-          <p className="card-property__title">{title}</p>
-          <p className="card-property__location">{location}</p>
+          <p className="card-property__title" title={title}>{title}</p>
+          <p className="card-property__location" title={location}>{location}</p>
 
           <div className="card-property__meta">
             <span>{beds} Beds</span>

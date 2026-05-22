@@ -1,4 +1,4 @@
-require("dotenv").config();
+require("dotenv").config({ path: require("path").join(__dirname, ".env") });
 
 const http=
 require("http");
@@ -44,18 +44,15 @@ const PORT=
 process.env.PORT||5000;
 
 
-server.listen(
+server.on('error', (error) => {
+	if (error.code === 'EADDRINUSE') {
+		console.log(`Port ${PORT} is already in use. Backend is likely already running.`)
+		process.exit(0)
+	}
 
-PORT,
+	throw error
+})
 
-()=>{
-
-console.log(
-
-`Server running on ${PORT}`
-
-);
-
-}
-
-);
+server.listen(PORT, () => {
+	console.log(`Server running on ${PORT}`)
+})

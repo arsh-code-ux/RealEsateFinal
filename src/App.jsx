@@ -15,12 +15,13 @@ import HelpCenter from './pages/HelpCenter'
 import FAQ from './pages/FAQ'
 import NeighborhoodDetail from './pages/NeighborhoodDetail'
 import PropertyDetail from './pages/PropertyDetail'
+import PostProperty from './pages/PostProperty'
 
 function AppContent() {
   const { pathname } = useLocation()
   
   // Routes where navbar and footer should be hidden
-  const hideHeaderFooter = pathname === '/login' || pathname === '/signup'
+  const hideHeaderFooter = pathname === '/login' || pathname === '/signup' || pathname === '/post-property'
 
   return (
     <div>
@@ -38,6 +39,7 @@ function AppContent() {
         <Route path="/faq" element={<FAQ />} />
         <Route path="/neighborhood/:slug" element={<NeighborhoodDetail />} />
         <Route path="/property/:slug" element={<PropertyDetail />} />
+        <Route path="/post-property" element={<PostProperty />} />
       </Routes>
       {!hideHeaderFooter && <Footer />}
       <Toast />

@@ -21,6 +21,13 @@ const protect = async (req, res, next) => {
 
       req.user = await User.findById(decoded.id);
 
+      if (!req.user) {
+        return res.status(401).json({
+          success: false,
+          message: "Not authorized"
+        });
+      }
+
       next();
 
     } catch (error) {
@@ -29,6 +36,11 @@ const protect = async (req, res, next) => {
         message: "Not authorized"
       });
     }
+  } else {
+    res.status(401).json({
+      success: false,
+      message: "Not authorized"
+    });
   }
 };
 

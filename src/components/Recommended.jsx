@@ -13,6 +13,7 @@ function Recommended() {
     () => filterProperties(properties, searchFilters),
     [searchFilters],
   )
+  const previewProperties = filtered.slice(0, 6)
 
   const clearFilters = () => {
     setSearchFilters({ neighborhood: '', propertyType: '', budget: '' })
@@ -36,7 +37,7 @@ function Recommended() {
                 Clear filters
               </button>
             ) : (
-              <Link to="/listings" className="link-text link-text--chevron" style={{ textDecoration: 'none' }}>
+              <Link to="/listings?view=all" className="link-text link-text--chevron" style={{ textDecoration: 'none' }}>
                 View All <span aria-hidden>›</span>
               </Link>
             )}
@@ -54,7 +55,7 @@ function Recommended() {
           </ScrollReveal>
         ) : (
           <div className="grid-3">
-            {filtered.map((item, i) => (
+            {previewProperties.map((item, i) => (
               <ScrollReveal key={item.slug} delay={i * 80}>
                 <PropertyCard {...item} />
               </ScrollReveal>

@@ -775,12 +775,20 @@ img {
     font-weight: 600;
     margin-top: 0.5rem;
     color: var(--color-text-light);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 
   .card-property__location {
     color: var(--color-text-muted-light);
     margin-top: 0.25rem;
     font-size: 0.9rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 
   .card-property__meta {

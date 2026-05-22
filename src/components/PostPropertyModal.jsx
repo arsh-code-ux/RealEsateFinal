@@ -46,10 +46,16 @@ export default function PostPropertyModal({ onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
-      <div className="bg-white rounded-xl p-6 w-full max-w-lg shadow-lg">
-        <h2 className="text-xl font-bold mb-4">Add New Property</h2>
-        <form onSubmit={handleSubmit} className="space-y-3">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/70 px-4 py-6 sm:py-10">
+      <div className="min-h-full flex items-start justify-center sm:items-center">
+        <div className="w-full max-w-lg max-h-[calc(100vh-3rem)] overflow-y-auto rounded-xl bg-white p-6 shadow-lg sm:max-h-[calc(100vh-5rem)]">
+          <div className="mb-4 flex items-start justify-between gap-4">
+            <h2 className="text-xl font-bold">Add New Property</h2>
+            <button type="button" onClick={onClose} className="text-2xl leading-none text-gray-500 hover:text-gray-800" aria-label="Close modal">
+              ×
+            </button>
+          </div>
+          <form onSubmit={handleSubmit} className="space-y-3">
           <input name="title" placeholder="Title" value={form.title} onChange={handleChange} className="w-full border p-2 rounded" required />
           <textarea name="description" placeholder="Description" value={form.description} onChange={handleChange} className="w-full border p-2 rounded" rows={3} required />
           <input name="location" placeholder="Location" value={form.location} onChange={handleChange} className="w-full border p-2 rounded" required />
@@ -76,7 +82,8 @@ export default function PostPropertyModal({ onClose }) {
               {loading ? 'Posting...' : 'Post Property'}
             </button>
           </div>
-        </form>
+          </form>
+        </div>
       </div>
     </div>
   );

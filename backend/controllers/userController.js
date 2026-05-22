@@ -137,11 +137,9 @@ message:
 
 catch(error){
 
-res.status(500)
-.json({
+res.status(500).json({
 
 success:false,
-
 message:error.message
 
 });
@@ -175,8 +173,7 @@ req.params.propertyId
 );
 
 
-res.status(200)
-.json({
+res.status(200).json({
 
 success:true,
 
@@ -189,11 +186,9 @@ message:
 
 catch(error){
 
-res.status(500)
-.json({
+res.status(500).json({
 
 success:false,
-
 message:error.message
 
 });
@@ -220,8 +215,7 @@ req.user._id
 );
 
 
-res.status(200)
-.json({
+res.status(200).json({
 
 success:true,
 
@@ -234,11 +228,9 @@ user.wishlist
 
 catch(error){
 
-res.status(500)
-.json({
+res.status(500).json({
 
 success:false,
-
 message:error.message
 
 });
