@@ -1,4 +1,5 @@
 const express = require("express");
+const path = require("path");
 const cors = require("cors");
 const helmet = require("helmet");
 const morgan = require("morgan");
@@ -28,12 +29,17 @@ const app = express();
 
 app.use(express.json());
 app.use(cors());
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: false,
+}));
 app.use(morgan("dev"));
 app.use(cookieParser());
 
 const limiter=rateLimit({
 windowMs:15*60*1000,max:100});
+
+// Apply rate limiter to API routes only
+app.use("/api", limiter);
 
 app.use("/api/users",userRoutes);
 app.use("/api/auth", authRoutes);
@@ -48,14 +54,22 @@ app.use("/api/search",searchRoutes);
 app.use("/api/notifications",notificationRoutes);
 app.use("/api/bookings",bookingRoutes);
 app.use("/api-docs",swaggerUi.serve,swaggerUi.setup(specs));
-app.use(limiter);
 
-app.get("/", (req, res) => {
-  res.json({
-    success: true,
-    message: "API running successfully"
+// Serve static assets in production
+if (process.env.NODE_ENV === "production") {
+  app.use(express.static(path.join(__dirname, "../dist")));
+  
+  app.get("*", (req, res) => {
+    res.sendFile(path.resolve(__dirname, "../", "dist", "index.html"));
   });
-});
+} else {
+  app.get("/", (req, res) => {
+    res.json({
+      success: true,
+      message: "API running successfully"
+    });
+  });
+}
 
 app.use(errorMiddleware);
 

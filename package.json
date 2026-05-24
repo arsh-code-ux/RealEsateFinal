@@ -11,6 +11,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "start:backend": "node backend/server.js",
+    "start": "node backend/server.js",
+    "seed": "node backend/seed.js",
     "dev:all": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\""
   },
   "dependencies": {
