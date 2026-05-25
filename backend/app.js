@@ -60,8 +60,13 @@ if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "../dist")));
   
   app.get('*', (req, res) => {
-  res.sendFile(path.resolve(__dirname, "../", "dist", "index.html"));
-});
+    // If the request is for an API route, return 404
+    if (req.path.startsWith('/api')) {
+      return res.status(404).json({ error: 'API route not found' });
+    }
+    // Otherwise serve the React SPA entry point
+    res.sendFile(path.resolve(__dirname, '..', 'dist', 'index.html'));
+  });
 } else {
   app.get("/", (req, res) => {
     res.json({
