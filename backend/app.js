@@ -59,7 +59,7 @@ app.use("/api-docs",swaggerUi.serve,swaggerUi.setup(specs));
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "../dist")));
   
-  app.get('*', (req, res) => {
+  app.get('/:path*', (req, res) => {
     // If the request is for an API route, return 404
     if (req.path.startsWith('/api')) {
       return res.status(404).json({ error: 'API route not found' });
